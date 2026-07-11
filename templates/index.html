@@ -294,6 +294,7 @@
     }
     @keyframes slideIn { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -490,17 +491,9 @@ What would you like to know today?</div>
     <!-- Macros overview -->
     <div class="card-dark">
       <div class="card-title-sm">📊 Daily Macro Breakdown</div>
-      <div id="macro-bars" style="max-width:480px;margin-top:.5rem;">
-        <div class="macro-bar-row">
-          <div class="macro-label">Carbs</div>
-          <div class="macro-track"><div class="macro-fill" id="macro-carbs" style="width:55%;background:#58a6ff;"></div></div>
-          <div class="macro-val" id="macro-carbs-v">248 g</div>
-        </div>
-        <div class="macro-bar-row">
-          <div class="macro-label">Protein</div>
-          <div class="macro-track"><div class="macro-fill" id="macro-protein" style="width:20%;background:#3fb950;"></div></div>
-          <div class="macro-val" id="macro-protein-v">72 g</div>
-        </div>
+      <div class="macro-chart-container" style="position: relative; height: 220px; width: 100%; margin: 1rem auto 0 auto;">
+    <canvas id="macroDoughnutChart"></canvas>
+  </div>
         <div class="macro-bar-row">
           <div class="macro-label">Fats</div>
           <div class="macro-track"><div class="macro-fill" id="macro-fat" style="width:25%;background:#e3b341;"></div></div>
@@ -778,14 +771,40 @@ function updateMacros(kcal, diet) {
   const fat     = Math.round(kcal * r.f / 100 / 9);
   const fibre   = r.fi;
 
-  document.getElementById('macro-carbs').style.width   = r.c + '%';
-  document.getElementById('macro-protein').style.width = r.p + '%';
-  document.getElementById('macro-fat').style.width     = r.f + '%';
-  document.getElementById('macro-fibre').style.width   = Math.min(100, fibre * 2) + '%';
   document.getElementById('macro-carbs-v').textContent   = carbs + ' g';
   document.getElementById('macro-protein-v').textContent = protein + ' g';
   document.getElementById('macro-fat-v').textContent     = fat + ' g';
   document.getElementById('macro-fibre-v').textContent   = fibre + ' g';
+updateMacroChart(carbs, protein, fat, fibre);
+}
+let macroChart = null;
+
+function updateMacroChart(carbs, protein, fats, fibre) {
+    const ctx = document.getElementById('macroDoughnutChart').getContext('2d');
+    if (macroChart) {
+        macroChart.destroy();
+    }
+    macroChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Carbs (g)', 'Protein (g)', 'Fats (g)', 'Fiber (g)'],
+            datasets: [{
+                data: [carbs, protein, fats, fibre],
+                backgroundColor: ['#58a6ff', '#3fb950', '#f0883e', '#f85149'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#ffffff', font: { size: 11 } }
+                }
+            }
+        }
+    });
 }
 
 function askAgentForMealPlan() {
