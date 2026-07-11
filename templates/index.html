@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriAI – Indian Diet & Nutrition Agent</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary:   #0d1117;
+      --bg-surface:   #161b22;
+      --bg-card:      #1c2128;
+      --bg-input:     #21262d;
+      --border:       #30363d;
+      --text-primary: #e6edf3;
+      --text-muted:   #8b949e;
+      --accent:       #f78166;
+      --accent-green: #3fb950;
+      --accent-blue:  #58a6ff;
+      --accent-gold:  #e3b341;
+      --user-bubble:  #1f4068;
+      --bot-bubble:   #1c2128;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Navbar ── */
+    .navbar-custom {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+    }
+    .navbar-brand-text { font-size: 1.2rem; font-weight: 700; color: var(--accent) !important; letter-spacing: .3px; }
+    .navbar-brand-text span { color: var(--text-primary); font-weight: 400; }
+    .nav-pill {
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: all .2s;
+      text-decoration: none;
+    }
+    .nav-pill:hover, .nav-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      display: inline-block;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── Layout ── */
+    .main-container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+    /* ── Section tabs ── */
+    .section-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg-surface); color: var(--text-muted);
+      font-size: .82rem; cursor: pointer; transition: all .2s;
+    }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tab-btn:hover:not(.active) { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+    .section { display: none; }
+    .section.visible { display: block; }
+
+    /* ── Card base ── */
+    .card-dark {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .card-title-sm { font-size: .75rem; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin-bottom: .75rem; }
+
+    /* ── Chat ── */
+    .chat-wrapper { display: grid; grid-template-columns: 1fr 280px; gap: 1rem; }
+    @media(max-width:768px){ .chat-wrapper { grid-template-columns: 1fr; } }
+
+    #chat-messages {
+      height: 420px;
+      overflow-y: auto;
+      padding: .75rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      scroll-behavior: smooth;
+    }
+    #chat-messages::-webkit-scrollbar { width: 4px; }
+    #chat-messages::-webkit-scrollbar-track { background: transparent; }
+    #chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .msg { display: flex; margin-bottom: .75rem; gap: .6rem; align-items: flex-start; }
+    .msg.user { flex-direction: row-reverse; }
+    .msg-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; flex-shrink: 0;
+    }
+    .msg.bot .msg-avatar  { background: var(--accent); color: #fff; }
+    .msg.user .msg-avatar { background: var(--accent-blue); color: #fff; }
+    .msg-bubble {
+      max-width: 78%;
+      padding: .6rem .9rem;
+      border-radius: 12px;
+      font-size: .85rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+    .msg.bot  .msg-bubble { background: var(--bot-bubble); border: 1px solid var(--border); border-top-left-radius: 2px; }
+    .msg.user .msg-bubble { background: var(--user-bubble); border-top-right-radius: 2px; }
+
+    .chat-input-row { display: flex; gap: .5rem; margin-top: .75rem; }
+    #user-input {
+      flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: 8px; padding: .55rem .85rem;
+      font-size: .85rem; outline: none; resize: none; height: 42px;
+    }
+    #user-input:focus { border-color: var(--accent-blue); }
+    #user-input::placeholder { color: var(--text-muted); }
+
+    .btn-send {
+      background: var(--accent); border: none; color: #fff;
+      border-radius: 8px; padding: 0 16px; cursor: pointer;
+      font-size: 1rem; transition: opacity .2s;
+    }
+    .btn-send:hover { opacity: .85; }
+    .btn-send:disabled { opacity: .4; cursor: not-allowed; }
+
+    .quick-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+    .chip {
+      padding: 4px 10px; font-size: .75rem; border-radius: 14px;
+      border: 1px solid var(--border); color: var(--text-muted);
+      cursor: pointer; transition: all .18s; background: transparent;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Typing indicator */
+    .typing-dots span {
+      display: inline-block; width: 7px; height: 7px;
+      border-radius: 50%; background: var(--text-muted); margin: 0 2px;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: .2s; }
+    .typing-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+    /* Chat sidebar */
+    .chat-sidebar { display: flex; flex-direction: column; gap: .75rem; }
+    .info-pill {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; padding: .6rem .85rem; font-size: .8rem;
+      color: var(--text-muted);
+    }
+    .info-pill strong { color: var(--text-primary); display: block; margin-bottom: 2px; }
+
+    /* ── BMI ── */
+    .bmi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media(max-width:640px){ .bmi-grid { grid-template-columns: 1fr; } }
+
+    .bmi-result-card {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.25rem; text-align: center;
+    }
+    .bmi-value { font-size: 2.8rem; font-weight: 700; color: var(--accent-gold); line-height: 1; }
+    .bmi-label { font-size: .85rem; margin-top: .3rem; color: var(--text-muted); }
+    .bmi-category { font-size: 1rem; font-weight: 600; margin-top: .5rem; }
+
+    .bmi-bar-wrap { margin: 1rem 0; }
+    .bmi-bar {
+      height: 8px; border-radius: 4px; width: 100%;
+      background: linear-gradient(to right,
+        #58a6ff 0%, #58a6ff 18.5%,
+        #3fb950 18.5%, #3fb950 25%,
+        #e3b341 25%, #e3b341 30%,
+        #f78166 30%);
+    }
+    .bmi-marker {
+      position: relative; top: -22px; transition: left .5s;
+      width: 0; height: 0;
+    }
+    .bmi-marker::after {
+      content: "▼"; color: #fff; font-size: .7rem;
+      position: absolute; transform: translateX(-50%);
+    }
+
+    .form-label-dark { color: var(--text-muted); font-size: .82rem; margin-bottom: .3rem; }
+    .form-ctrl-dark {
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: 6px; padding: .45rem .7rem;
+      font-size: .85rem; width: 100%; outline: none;
+      transition: border-color .2s;
+    }
+    .form-ctrl-dark:focus { border-color: var(--accent-blue); }
+    .form-ctrl-dark option { background: var(--bg-card); }
+
+    .btn-accent {
+      background: var(--accent); border: none; color: #fff;
+      border-radius: 7px; padding: .5rem 1.25rem; font-size: .85rem;
+      cursor: pointer; transition: opacity .2s; font-weight: 600;
+    }
+    .btn-accent:hover { opacity: .85; }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); border-radius: 7px; padding: .5rem 1.25rem;
+      font-size: .85rem; cursor: pointer; transition: all .2s;
+    }
+    .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+    /* ── Meal Planner ── */
+    .meal-day-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: .75rem; }
+    .meal-day-card {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; padding: .85rem;
+    }
+    .meal-day-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .7px; color: var(--accent-gold); margin-bottom: .5rem; font-weight: 700; }
+    .meal-slot { display: flex; justify-content: space-between; font-size: .78rem; padding: 3px 0; border-bottom: 1px solid var(--border); }
+    .meal-slot:last-child { border-bottom: none; }
+    .slot-label { color: var(--text-muted); }
+    .slot-food { color: var(--text-primary); text-align: right; max-width: 60%; }
+
+    .macro-bar-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem; }
+    .macro-label { width: 70px; font-size: .78rem; color: var(--text-muted); }
+    .macro-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .macro-fill { height: 100%; border-radius: 3px; transition: width .6s; }
+    .macro-val { width: 50px; font-size: .78rem; color: var(--text-primary); text-align: right; }
+
+    .meal-controls { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
+
+    /* ── Family Profiles ── */
+    .family-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: 1rem; }
+    .profile-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.1rem; position: relative;
+      transition: border-color .2s;
+    }
+    .profile-card:hover { border-color: var(--accent-blue); }
+    .profile-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--bg-input); display: flex; align-items: center;
+      justify-content: center; font-size: 1.5rem; margin-bottom: .75rem;
+    }
+    .profile-name { font-size: .95rem; font-weight: 600; color: var(--text-primary); }
+    .profile-meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+    .profile-tag {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: .7rem; font-weight: 600; margin: .4rem .2rem 0 0;
+    }
+    .tag-veg   { background: rgba(63,185,80,.15); color: var(--accent-green); border: 1px solid rgba(63,185,80,.3); }
+    .tag-diab  { background: rgba(227,179,65,.15); color: var(--accent-gold);  border: 1px solid rgba(227,179,65,.3); }
+    .tag-sport { background: rgba(88,166,255,.15); color: var(--accent-blue);  border: 1px solid rgba(88,166,255,.3); }
+    .tag-allergy { background: rgba(247,129,102,.15); color: var(--accent);   border: 1px solid rgba(247,129,102,.3); }
+
+    .profile-cals { margin-top: .65rem; font-size: .82rem; color: var(--text-muted); }
+    .profile-cals strong { color: var(--accent-gold); }
+
+    .add-profile-card {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 1.1rem;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 170px; cursor: pointer; transition: border-color .2s; color: var(--text-muted);
+      background: transparent; gap: .4rem;
+    }
+    .add-profile-card:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+    /* toast */
+    .toast-wrap {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999;
+      display: flex; flex-direction: column; gap: .5rem;
+    }
+    .toast-msg {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-green); border-radius: 8px;
+      padding: .65rem 1rem; font-size: .82rem; color: var(--text-primary);
+      min-width: 220px; animation: slideIn .25s ease;
+    }
+    @keyframes slideIn { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar-custom d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3">
+    <span class="navbar-brand-text">🥗 NutriAI <span>| Indian Diet Agent</span></span>
+    <span style="font-size:.75rem;color:var(--text-muted)">
+      <span class="status-dot"></span>Powered by Llama 3.3 70B
+    </span>
+  </div>
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <a class="nav-pill active" onclick="showSection('chat')">💬 Chat</a>
+    <a class="nav-pill" onclick="showSection('bmi')">⚖️ BMI</a>
+    <a class="nav-pill" onclick="showSection('meal')">🍱 Meal Plan</a>
+    <a class="nav-pill" onclick="showSection('family')">👨‍👩‍👧 Family</a>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <!-- ─────────────────── CHAT SECTION ─────────────────── -->
+  <div id="sec-chat" class="section visible">
+    <div class="chat-wrapper">
+
+      <!-- Left: chat panel -->
+      <div class="card-dark">
+        <div class="card-title-sm">🤖 AI Nutrition Agent — Ask me anything about Indian diet & health</div>
+        <div id="chat-messages">
+          <div class="msg bot">
+            <div class="msg-avatar">🥗</div>
+            <div class="msg-bubble">Namaste! 🙏 I'm NutriAI, your personal Indian diet and nutrition assistant.<br><br>
+I can help you with <strong>meal plans, calorie counts, diet tips for health conditions, Ayurvedic nutrition</strong>, and more — all tailored to Indian cuisine.<br><br>
+What would you like to know today?</div>
+          </div>
+        </div>
+
+        <div class="chat-input-row">
+          <textarea id="user-input" placeholder="Ask about diet, nutrition, meal plans…" rows="1"></textarea>
+          <button class="btn-send" id="send-btn" onclick="sendMessage()">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </div>
+
+        <div class="quick-chips">
+          <button class="chip" onclick="useChip(this)">Best foods for diabetes</button>
+          <button class="chip" onclick="useChip(this)">High protein vegetarian meals</button>
+          <button class="chip" onclick="useChip(this)">Low calorie Indian breakfast</button>
+          <button class="chip" onclick="useChip(this)">Post-workout meal ideas</button>
+          <button class="chip" onclick="useChip(this)">Weight loss Indian diet plan</button>
+          <button class="chip" onclick="useChip(this)">Iron-rich foods for women</button>
+        </div>
+      </div>
+
+      <!-- Right: sidebar -->
+      <div class="chat-sidebar">
+        <div class="info-pill"><strong>🧠 About NutriAI</strong>Specialized in traditional Indian diets, Ayurvedic nutrition, and regional cuisine guidance.</div>
+        <div class="info-pill"><strong>🌿 Diet Modes</strong>Supports vegetarian, vegan, Jain, diabetic, low-carb & high-protein Indian meals.</div>
+        <div class="info-pill"><strong>🏥 Health Focus</strong>Diabetes, PCOD, hypertension, thyroid, anemia — condition-specific advice.</div>
+        <div class="info-pill"><strong>📍 Regional Cuisine</strong>North, South, East & West Indian foods with nutritional breakdowns.</div>
+        <div class="info-pill" style="margin-top:auto;">
+          <strong style="color:var(--text-muted);font-size:.7rem;">MODEL</strong>
+          <span style="color:var(--accent-blue);font-size:.78rem;">meta-llama/llama-3-3-70b-instruct</span>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /chat -->
+
+  <!-- ─────────────────── BMI SECTION ─────────────────── -->
+  <div id="sec-bmi" class="section">
+    <div class="bmi-grid">
+
+      <!-- Calculator form -->
+      <div class="card-dark">
+        <div class="card-title-sm">⚖️ BMI Calculator</div>
+
+        <div class="mb-3">
+          <label class="form-label-dark">Height</label>
+          <div class="d-flex gap-2">
+            <input type="number" id="bmi-cm" class="form-ctrl-dark" placeholder="cm (e.g. 165)" min="100" max="250" />
+            <span style="color:var(--text-muted);align-self:center;font-size:.8rem;">or</span>
+            <input type="number" id="bmi-ft" class="form-ctrl-dark" placeholder="ft" min="3" max="8" style="width:70px"/>
+            <input type="number" id="bmi-in" class="form-ctrl-dark" placeholder="in" min="0" max="11" style="width:70px"/>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-dark">Weight (kg)</label>
+          <input type="number" id="bmi-weight" class="form-ctrl-dark" placeholder="e.g. 68" min="20" max="300" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-dark">Age</label>
+          <input type="number" id="bmi-age" class="form-ctrl-dark" placeholder="e.g. 30" min="5" max="100" />
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-dark">Gender</label>
+          <select id="bmi-gender" class="form-ctrl-dark">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn-accent" onclick="calcBMI()">Calculate BMI</button>
+          <button class="btn-outline" onclick="resetBMI()">Reset</button>
+        </div>
+      </div>
+
+      <!-- BMI result -->
+      <div class="card-dark d-flex flex-column gap-3">
+        <div class="card-title-sm">📊 Your Result</div>
+        <div class="bmi-result-card">
+          <div class="bmi-value" id="bmi-display">—</div>
+          <div class="bmi-label">Body Mass Index</div>
+          <div class="bmi-category" id="bmi-cat">Enter your details</div>
+        </div>
+
+        <div class="bmi-bar-wrap">
+          <div style="position:relative;">
+            <div class="bmi-bar"></div>
+            <div class="bmi-marker" id="bmi-marker" style="left:0%"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-3" style="font-size:.7rem;color:var(--text-muted);">
+            <span style="color:#58a6ff">Underweight</span>
+            <span style="color:#3fb950">Normal</span>
+            <span style="color:#e3b341">Overweight</span>
+            <span style="color:#f78166">Obese</span>
+          </div>
+        </div>
+
+        <div id="bmi-diet-tip" class="info-pill" style="font-size:.8rem;color:var(--text-muted);">
+          Calculate BMI to receive personalised Indian diet recommendations.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BMI ranges reference -->
+    <div class="card-dark mt-3">
+      <div class="card-title-sm">📋 BMI Reference Ranges (Asian / Indian Population)</div>
+      <div class="d-flex flex-wrap gap-2 mt-1">
+        <div style="flex:1;min-width:130px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:.65rem;">
+          <div style="color:#58a6ff;font-weight:700;font-size:.85rem;">Below 18.5</div>
+          <div style="color:var(--text-muted);font-size:.75rem;margin-top:3px;">Underweight</div>
+        </div>
+        <div style="flex:1;min-width:130px;background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.2);border-radius:8px;padding:.65rem;">
+          <div style="color:#3fb950;font-weight:700;font-size:.85rem;">18.5 – 22.9</div>
+          <div style="color:var(--text-muted);font-size:.75rem;margin-top:3px;">Normal Weight</div>
+        </div>
+        <div style="flex:1;min-width:130px;background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.2);border-radius:8px;padding:.65rem;">
+          <div style="color:#e3b341;font-weight:700;font-size:.85rem;">23.0 – 27.4</div>
+          <div style="color:var(--text-muted);font-size:.75rem;margin-top:3px;">Overweight</div>
+        </div>
+        <div style="flex:1;min-width:130px;background:rgba(247,129,102,.08);border:1px solid rgba(247,129,102,.2);border-radius:8px;padding:.65rem;">
+          <div style="color:#f78166;font-weight:700;font-size:.85rem;">27.5 and above</div>
+          <div style="color:var(--text-muted);font-size:.75px;margin-top:3px;">Obese</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /bmi -->
+
+  <!-- ─────────────────── MEAL PLANNER ─────────────────── -->
+  <div id="sec-meal" class="section">
+    <div class="card-dark mb-3">
+      <div class="card-title-sm">🍱 Weekly Indian Meal Planner</div>
+      <div class="meal-controls">
+        <select id="meal-diet" class="form-ctrl-dark" style="width:auto;">
+          <option value="balanced">Balanced</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="vegan">Vegan</option>
+          <option value="diabetic">Diabetic-Friendly</option>
+          <option value="high-protein">High Protein</option>
+          <option value="weight-loss">Weight Loss</option>
+        </select>
+        <select id="meal-calories" class="form-ctrl-dark" style="width:auto;">
+          <option value="1200">1200 kcal</option>
+          <option value="1500">1500 kcal</option>
+          <option value="1800" selected>1800 kcal</option>
+          <option value="2200">2200 kcal</option>
+          <option value="2500">2500 kcal</option>
+        </select>
+        <button class="btn-accent" onclick="generateMealPlan()">Generate Plan</button>
+        <button class="btn-outline" onclick="askAgentForMealPlan()">✨ Ask AI Agent</button>
+      </div>
+
+      <div id="meal-day-grid" class="meal-day-grid"></div>
+    </div>
+
+    <!-- Macros overview -->
+    <div class="card-dark">
+      <div class="card-title-sm">📊 Daily Macro Breakdown</div>
+      <div id="macro-bars" style="max-width:480px;margin-top:.5rem;">
+        <div class="macro-bar-row">
+          <div class="macro-label">Carbs</div>
+          <div class="macro-track"><div class="macro-fill" id="macro-carbs" style="width:55%;background:#58a6ff;"></div></div>
+          <div class="macro-val" id="macro-carbs-v">248 g</div>
+        </div>
+        <div class="macro-bar-row">
+          <div class="macro-label">Protein</div>
+          <div class="macro-track"><div class="macro-fill" id="macro-protein" style="width:20%;background:#3fb950;"></div></div>
+          <div class="macro-val" id="macro-protein-v">72 g</div>
+        </div>
+        <div class="macro-bar-row">
+          <div class="macro-label">Fats</div>
+          <div class="macro-track"><div class="macro-fill" id="macro-fat" style="width:25%;background:#e3b341;"></div></div>
+          <div class="macro-val" id="macro-fat-v">50 g</div>
+        </div>
+        <div class="macro-bar-row">
+          <div class="macro-label">Fibre</div>
+          <div class="macro-track"><div class="macro-fill" id="macro-fibre" style="width:40%;background:#f78166;"></div></div>
+          <div class="macro-val" id="macro-fibre-v">28 g</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /meal -->
+
+  <!-- ─────────────────── FAMILY PROFILES ─────────────────── -->
+  <div id="sec-family" class="section">
+    <div class="card-dark mb-3">
+      <div class="card-title-sm">👨‍👩‍👧 Family Nutrition Profiles</div>
+      <div class="family-grid" id="family-grid"></div>
+    </div>
+
+    <div class="card-dark">
+      <div class="card-title-sm">➕ Add Family Member</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;">
+        <div>
+          <label class="form-label-dark">Name</label>
+          <input id="fp-name" class="form-ctrl-dark" placeholder="e.g. Priya" />
+        </div>
+        <div>
+          <label class="form-label-dark">Age</label>
+          <input id="fp-age" class="form-ctrl-dark" type="number" placeholder="e.g. 32" />
+        </div>
+        <div>
+          <label class="form-label-dark">Gender</label>
+          <select id="fp-gender" class="form-ctrl-dark">
+            <option>Female</option><option>Male</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label-dark">Diet Type</label>
+          <select id="fp-diet" class="form-ctrl-dark">
+            <option>Vegetarian</option><option>Non-Vegetarian</option><option>Vegan</option><option>Jain</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label-dark">Condition (opt.)</label>
+          <input id="fp-cond" class="form-ctrl-dark" placeholder="e.g. Diabetic" />
+        </div>
+        <div>
+          <label class="form-label-dark">Calorie Goal</label>
+          <input id="fp-cal" class="form-ctrl-dark" type="number" placeholder="e.g. 1800" />
+        </div>
+      </div>
+      <button class="btn-accent mt-3" onclick="addFamilyMember()">Add Member</button>
+    </div>
+  </div><!-- /family -->
+
+</div><!-- /main-container -->
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// ── Section switcher ──────────────────────────────────────────────────
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.getElementById('sec-' + id).classList.add('visible');
+  document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast-msg';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────
+const chatBox = document.getElementById('chat-messages');
+const sendBtn = document.getElementById('send-btn');
+const inputEl = document.getElementById('user-input');
+
+function appendMsg(role, text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar';
+  avatar.textContent = role === 'bot' ? '🥗' : '👤';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  wrap.appendChild(avatar);
+  wrap.appendChild(bubble);
+  chatBox.appendChild(wrap);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  return bubble;
+}
+
+function showTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot';
+  wrap.id = 'typing-indicator';
+  wrap.innerHTML = `<div class="msg-avatar">🥗</div>
+    <div class="msg-bubble"><div class="typing-dots">
+      <span></span><span></span><span></span>
+    </div></div>`;
+  chatBox.appendChild(wrap);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendMessage(text) {
+  const msg = (text || inputEl.value).trim();
+  if (!msg) return;
+  inputEl.value = '';
+  appendMsg('user', msg);
+  sendBtn.disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    removeTyping();
+    if (data.reply) {
+      appendMsg('bot', data.reply);
+    } else {
+      appendMsg('bot', '⚠️ Error: ' + (data.error || 'Unexpected response.'));
+    }
+  } catch (err) {
+    removeTyping();
+    appendMsg('bot', '⚠️ Network error. Please check the server.');
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+function useChip(el) {
+  sendMessage(el.textContent);
+}
+
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// ── BMI ───────────────────────────────────────────────────────────────
+const bmiDietTips = {
+  underweight: 'Try calorie-dense Indian foods: whole milk, ghee, peanut chikki, banana, rajma-chawal, dry fruits in milk.',
+  normal:      'Great work! Maintain with a balanced thali — 2 rotis, 1 bowl dal, sabzi, curd, salad, and seasonal fruit.',
+  overweight:  'Shift to millets (jowar/bajra roti), moong dal, grilled paneer, lots of sabzi, and reduce rice portions.',
+  obese:       'Focus on low-GI foods: oats upma, moong dal chilla, salads with sprouts. Avoid fried snacks & maida.',
+};
+
+function calcBMI() {
+  let heightCm = parseFloat(document.getElementById('bmi-cm').value);
+  const ft = parseFloat(document.getElementById('bmi-ft').value);
+  const inch = parseFloat(document.getElementById('bmi-in').value) || 0;
+  const weight = parseFloat(document.getElementById('bmi-weight').value);
+
+  if (!heightCm && ft) heightCm = ft * 30.48 + inch * 2.54;
+  if (!heightCm || !weight) { showToast('Please enter height and weight.'); return; }
+
+  const hm = heightCm / 100;
+  const bmi = (weight / (hm * hm)).toFixed(1);
+  document.getElementById('bmi-display').textContent = bmi;
+
+  let cat, color, key;
+  if      (bmi < 18.5) { cat = 'Underweight'; color = '#58a6ff'; key = 'underweight'; }
+  else if (bmi < 23)   { cat = 'Normal Weight ✓'; color = '#3fb950'; key = 'normal'; }
+  else if (bmi < 27.5) { cat = 'Overweight'; color = '#e3b341'; key = 'overweight'; }
+  else                 { cat = 'Obese'; color = '#f78166'; key = 'obese'; }
+
+  const catEl = document.getElementById('bmi-cat');
+  catEl.textContent = cat;
+  catEl.style.color = color;
+
+  // Move marker: map BMI 15–35 → 0–100%
+  const pct = Math.min(100, Math.max(0, ((bmi - 15) / 20) * 100));
+  document.getElementById('bmi-marker').style.left = pct + '%';
+
+  document.getElementById('bmi-diet-tip').innerHTML =
+    `<strong style="color:${color}">${cat}</strong><br>${bmiDietTips[key]}`;
+}
+
+function resetBMI() {
+  ['bmi-cm','bmi-ft','bmi-in','bmi-weight','bmi-age'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('bmi-gender').value = '';
+  document.getElementById('bmi-display').textContent = '—';
+  document.getElementById('bmi-cat').textContent = 'Enter your details';
+  document.getElementById('bmi-cat').style.color = '';
+  document.getElementById('bmi-marker').style.left = '0%';
+  document.getElementById('bmi-diet-tip').innerHTML = 'Calculate BMI to receive personalised Indian diet recommendations.';
+}
+
+// ── MEAL PLANNER ──────────────────────────────────────────────────────
+const mealDB = {
+  balanced: [
+    { b:'Poha + Chai', l:'Dal Tadka + 2 Roti + Salad', s:'Sprout Chaat', d:'Palak Paneer + Rice' },
+    { b:'Idli Sambar', l:'Rajma Chawal + Raita', s:'Fruit Bowl', d:'Mixed Veg Sabzi + Roti' },
+    { b:'Besan Chilla', l:'Chole + Bhature', s:'Roasted Chana', d:'Moong Dal + Jeera Rice' },
+    { b:'Upma + Coconut Chutney', l:'Kadhi Chawal', s:'Banana', d:'Aloo Gobi + 2 Roti' },
+    { b:'Paratha + Dahi', l:'Sambar + Rice + Papad', s:'Mixed Nuts', d:'Dal Makhani + Naan' },
+    { b:'Oats Porridge + Milk', l:'Paneer Bhurji + Roti', s:'Buttermilk', d:'Fish Curry + Rice' },
+    { b:'Masala Dosa', l:'Veg Pulao + Raita', s:'Makhana', d:'Chicken Curry + 2 Roti' },
+  ],
+  vegetarian: [
+    { b:'Moong Dal Chilla', l:'Palak Dal + Roti', s:'Apple', d:'Paneer Tikka + Jeera Rice' },
+    { b:'Upma', l:'Baingan Bharta + 2 Roti', s:'Sprouts', d:'Rajma + Rice + Salad' },
+    { b:'Poha', l:'Chole Masala + Roti', s:'Dahi', d:'Mix Veg + Dal + Roti' },
+    { b:'Idli + Sambar', l:'Kadhi + Rice', s:'Banana', d:'Palak Paneer + Roti' },
+    { b:'Besan Chilla + Pudina Chutney', l:'Dal Fry + Roti', s:'Roasted Chana', d:'Paneer Bhurji + Chapati' },
+    { b:'Dalia Khichdi', l:'Veg Pulao + Raita', s:'Fruit Salad', d:'Moong Dal + Sabzi + Roti' },
+    { b:'Semolina Upma', l:'Malai Kofta + Naan', s:'Makhana', d:'Methi Thepla + Dahi' },
+  ],
+  diabetic: [
+    { b:'Oats Upma', l:'Moong Dal + Bajra Roti', s:'Cucumber', d:'Palak Dal + Brown Rice (small)' },
+    { b:'Egg Whites + Multigrain Toast', l:'Grilled Paneer + Salad', s:'Walnuts', d:'Fish + Veggies' },
+    { b:'Sprout Salad', l:'Rajma (less) + 1 Roti', s:'Buttermilk', d:'Chicken Soup + Salad' },
+    { b:'Besan Chilla (no oil)', l:'Kadhi + Jowar Roti', s:'Apple (small)', d:'Dal + Methi Sabzi + Roti' },
+    { b:'Ragi Dosa', l:'Sambar (no potato) + Idli', s:'Boiled Chana', d:'Baingan + Moong Dal + Roti' },
+    { b:'Dalia Porridge', l:'Palak Paneer + 1 Roti', s:'Flaxseed Drink', d:'Grilled Fish + Salad' },
+    { b:'Boiled Egg + Multigrain Bread', l:'Tofu Stir Fry + Brown Rice', s:'Nuts', d:'Chicken + Veggies Soup' },
+  ],
+};
+mealDB['vegan']       = mealDB.vegetarian.map(d => ({ b:d.b.replace('Dahi','Coconut Dahi').replace('Raita','Vegan Raita'), l:d.l.replace('Paneer','Tofu').replace('Buttermilk','Coconut Water'), s:d.s, d:d.d.replace('Paneer','Tofu').replace('Ghee','Oil') }));
+mealDB['high-protein']= mealDB.balanced.map(d => ({ b:'Egg Bhurji + Multigrain Toast', l:d.l + ' + Curd', s:'Boiled Egg / Paneer', d:d.d + ' + Dal' }));
+mealDB['weight-loss'] = mealDB.diabetic;
+
+const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function generateMealPlan() {
+  const diet  = document.getElementById('meal-diet').value;
+  const kcal  = parseInt(document.getElementById('meal-calories').value);
+  const db    = mealDB[diet] || mealDB.balanced;
+  const grid  = document.getElementById('meal-day-grid');
+  grid.innerHTML = '';
+  db.forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'meal-day-card';
+    card.innerHTML = `<div class="meal-day-label">${days[i]}</div>
+      <div class="meal-slot"><span class="slot-label">☀️ Break.</span><span class="slot-food">${d.b}</span></div>
+      <div class="meal-slot"><span class="slot-label">🕛 Lunch</span><span class="slot-food">${d.l}</span></div>
+      <div class="meal-slot"><span class="slot-label">🍵 Snack</span><span class="slot-food">${d.s}</span></div>
+      <div class="meal-slot"><span class="slot-label">🌙 Dinner</span><span class="slot-food">${d.d}</span></div>`;
+    grid.appendChild(card);
+  });
+  updateMacros(kcal, diet);
+  showToast('Meal plan generated for ' + diet + ' diet!');
+}
+
+function updateMacros(kcal, diet) {
+  const ratios = {
+    balanced:     { c:55, p:20, f:25, fi:38 },
+    vegetarian:   { c:58, p:18, f:24, fi:40 },
+    vegan:        { c:60, p:16, f:24, fi:45 },
+    diabetic:     { c:45, p:25, f:30, fi:35 },
+    'high-protein':{ c:40, p:35, f:25, fi:30 },
+    'weight-loss': { c:45, p:30, f:25, fi:38 },
+  };
+  const r = ratios[diet] || ratios.balanced;
+  const carbs   = Math.round(kcal * r.c / 100 / 4);
+  const protein = Math.round(kcal * r.p / 100 / 4);
+  const fat     = Math.round(kcal * r.f / 100 / 9);
+  const fibre   = r.fi;
+
+  document.getElementById('macro-carbs').style.width   = r.c + '%';
+  document.getElementById('macro-protein').style.width = r.p + '%';
+  document.getElementById('macro-fat').style.width     = r.f + '%';
+  document.getElementById('macro-fibre').style.width   = Math.min(100, fibre * 2) + '%';
+  document.getElementById('macro-carbs-v').textContent   = carbs + ' g';
+  document.getElementById('macro-protein-v').textContent = protein + ' g';
+  document.getElementById('macro-fat-v').textContent     = fat + ' g';
+  document.getElementById('macro-fibre-v').textContent   = fibre + ' g';
+}
+
+function askAgentForMealPlan() {
+  const diet = document.getElementById('meal-diet').value;
+  const kcal = document.getElementById('meal-calories').value;
+  showSection({ target: document.querySelector('.nav-pill') }, 'chat');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.getElementById('sec-chat').classList.add('visible');
+  sendMessage(`Create a 7-day ${diet} Indian meal plan for ${kcal} calories per day. Include breakfast, lunch, snack, and dinner with approximate calorie counts.`);
+}
+
+// ── FAMILY PROFILES ───────────────────────────────────────────────────
+let familyMembers = [
+  { name:'Ramesh', age:52, gender:'Male',   diet:'Diabetic',     cond:'Diabetes Type 2', cal:1600, emoji:'👨', tags:['tag-diab'] },
+  { name:'Sunita', age:48, gender:'Female', diet:'Vegetarian',   cond:'',                cal:1800, emoji:'👩', tags:['tag-veg'] },
+  { name:'Arjun',  age:22, gender:'Male',   diet:'Non-Vegetarian', cond:'Active Athlete', cal:2800, emoji:'🧑', tags:['tag-sport'] },
+  { name:'Kavya',  age:16, gender:'Female', diet:'Vegetarian',   cond:'Lactose intolerant', cal:2000, emoji:'👧', tags:['tag-veg','tag-allergy'] },
+];
+
+function renderFamily() {
+  const grid = document.getElementById('family-grid');
+  grid.innerHTML = '';
+  familyMembers.forEach((m, i) => {
+    const tags = m.tags.map(t => {
+      const labels = { 'tag-veg':'Vegetarian', 'tag-diab':'Diabetic', 'tag-sport':'Athlete', 'tag-allergy':'Allergy' };
+      return `<span class="profile-tag ${t}">${labels[t]}</span>`;
+    }).join('');
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    card.innerHTML = `
+      <div class="profile-avatar">${m.emoji}</div>
+      <div class="profile-name">${m.name}</div>
+      <div class="profile-meta">${m.age} yrs · ${m.gender} · ${m.diet}</div>
+      ${m.cond ? `<div class="profile-meta" style="margin-top:3px;color:var(--accent)">${m.cond}</div>` : ''}
+      <div>${tags}</div>
+      <div class="profile-cals">Daily Goal: <strong>${m.cal} kcal</strong></div>
+      <div style="display:flex;gap:.4rem;margin-top:.75rem;">
+        <button class="btn-outline" style="padding:3px 10px;font-size:.72rem;" onclick="askForMember(${i})">Ask AI</button>
+        <button class="btn-outline" style="padding:3px 10px;font-size:.72rem;color:var(--accent);border-color:var(--accent);" onclick="removeMember(${i})">Remove</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  // Add card
+  const addCard = document.createElement('button');
+  addCard.className = 'add-profile-card';
+  addCard.innerHTML = '<span style="font-size:1.5rem;">➕</span><span style="font-size:.8rem;">Add Member</span>';
+  addCard.onclick = () => document.getElementById('fp-name').focus();
+  grid.appendChild(addCard);
+}
+
+function addFamilyMember() {
+  const name  = document.getElementById('fp-name').value.trim();
+  const age   = parseInt(document.getElementById('fp-age').value) || 0;
+  const gender= document.getElementById('fp-gender').value;
+  const diet  = document.getElementById('fp-diet').value;
+  const cond  = document.getElementById('fp-cond').value.trim();
+  const cal   = parseInt(document.getElementById('fp-cal').value) || 1800;
+  if (!name) { showToast('Please enter a name.'); return; }
+  const emojis = { Female:'👩', Male:'👨', Other:'🧑' };
+  const tags = [];
+  if (diet === 'Vegetarian' || diet === 'Vegan' || diet === 'Jain') tags.push('tag-veg');
+  if (cond.toLowerCase().includes('diab')) tags.push('tag-diab');
+  if (cond.toLowerCase().includes('sport') || cond.toLowerCase().includes('athlete')) tags.push('tag-sport');
+  if (cond.toLowerCase().includes('allergy') || cond.toLowerCase().includes('intolerant')) tags.push('tag-allergy');
+  familyMembers.push({ name, age, gender, diet, cond, cal, emoji: emojis[gender] || '🧑', tags });
+  ['fp-name','fp-age','fp-cal','fp-cond'].forEach(id => document.getElementById(id).value = '');
+  renderFamily();
+  showToast(name + ' added to family profiles!');
+}
+
+function removeMember(i) {
+  const name = familyMembers[i].name;
+  familyMembers.splice(i, 1);
+  renderFamily();
+  showToast(name + ' removed.');
+}
+
+function askForMember(i) {
+  const m = familyMembers[i];
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.getElementById('sec-chat').classList.add('visible');
+  const prompt = `Create a personalised Indian diet plan for ${m.name}, aged ${m.age}, gender ${m.gender}, following a ${m.diet} diet, with daily goal of ${m.cal} kcal${m.cond ? ', who has ' + m.cond : ''}.`;
+  sendMessage(prompt);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+generateMealPlan();
+renderFamily();
+</script>
+</body>
+</html>
