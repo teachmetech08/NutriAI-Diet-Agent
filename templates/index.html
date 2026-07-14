@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Font Awesome CDN for Vector Social Media Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NutriAI – Indian Diet & Nutrition Agent</title>
@@ -293,6 +295,59 @@
       min-width: 220px; animation: slideIn .25s ease;
     }
     @keyframes slideIn { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+    .app-footer {
+    width: 100%;
+    background-color: #111827; /* Matches dashboard card tones */
+    border-top: 1px solid #1f2937;
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+}
+
+.copyright {
+    color: #9ca3af;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.social-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.social-icon {
+    font-size: 1.5rem;
+    color: #9ca3af;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* Specific Brand Hover Animations */
+.social-icon.linkedin:hover {
+    color: #0077b5;
+    transform: translateY(-2px);
+}
+
+.social-icon.github:hover {
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+/* Adjust layout rules for clean mobile views */
+@media (max-width: 640px) {
+    .footer-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -894,5 +949,18 @@ function askForMember(i) {
 generateMealPlan();
 renderFamily();
 </script>
+<footer class="app-footer">
+    <div class="footer-content">
+        <p class="copyright">&copy; 2026 Vansh Agarwal. All Rights Reserved.</p>
+        <div class="social-links">
+            <a href="https://www.linkedin.com/in/vansh-agarwal-techpluss08" target="_blank" class="social-icon linkedin">
+                <i class="fa-brands fa-linkedin"></i>
+            </a>
+            <a href="https://github.com/teachmetech08" target="_blank" class="social-icon github">
+                <i class="fa-brands fa-github"></i>
+            </a>
+        </div>
+    </div>
+</footer>
 </body>
 </html>
