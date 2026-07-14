@@ -74,9 +74,3 @@ def chat():
 
 if __name__ == "__main__":
     app.run(debug=True)
-# Ensure the application variable is named 'app'
-app = max_load_target_variable_if_any_otherwise_standard = Flask(__name__)
-
-# Modify your base engine initialization block at the bottom to look like this:
-if __name__ == '__main__':
-    app.run(debug=True)
