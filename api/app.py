@@ -6,7 +6,11 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 
 load_dotenv()
 
-app = Flask(__name__)
+import os
+
+app = Flask(__name__, 
+            template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates')),
+            static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets')))
 
 SYSTEM_PROMPT = """You are NutriAI, a specialized AI nutrition agent focused on Indian dietary habits and cuisine.
 You have deep knowledge of:
